@@ -7,12 +7,13 @@ import java.util.Random;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
-
 
 import com.security.jwt_spring_security_api.dto.LoginUserDto;
 import com.security.jwt_spring_security_api.dto.RegisterUserDto;
 import com.security.jwt_spring_security_api.dto.VerifyUserDto;
+import com.security.jwt_spring_security_api.model.User;
 import com.security.jwt_spring_security_api.model.User;
 import com.security.jwt_spring_security_api.repository.UserRepository;
 
@@ -27,34 +28,66 @@ public class AuthenticationService {
     private final EmailService emailService;
 
     public AuthenticationService(
-        UserRepository userRepository,
-        AuthenticationManager authenticationManager, 
-        PasswordEncoder passwordEncoder,
-        EmailService emailService) {
+            UserRepository userRepository,
+            AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.emailService = emailService;
     }
 
-    public User signup(RegisterUserDto input){
-        User user = new User(input.getUsername(),input.getEmail(), passwordEncoder.encode(input.getPassword()));
+    public User signup(RegisterUserDto input) {
+        User user = new User(input.getUsername(), input.getEmail(), passwordEncoder.encode(input.getPassword()));
+        user.setProvider(AuthProvider.LOCAL);
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(15));
         user.setEnabled(false);
         sendVerificationEmail(user);
         return userRepository.save(user);
-
     }
 
-    public User authenticate(LoginUserDto input){
+    public User authenticate(LoginUserDto input) {
         User user = userRepository.findByEmail(input.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
 
-        if(!user.isEnabled()){
+        if (user.getProvider() != AuthProvider.LOCAL) {
+            throw new RuntimeException("Please use " + user.getProvider() + " to login");
+        }
+
+        if (!user.isEnabled()) {
             throw new RuntimeException("Account not verified");
         }
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(input.getEmail(), input.getPassword()));
         return user;
+    }
+
+    public User processOAuth2User(OAuth2AuthenticationToken authentication) {
+        String email = authentication.getPrincipal().getAttribute("email");
+        String name = authentication.getPrincipal().getAttribute("name");
+        String providerId = authentication.getPrincipal().getAttribute("sub");
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        User user;
+
+        if (userOptional.isPresent()) {
+            user = userOptional.get();
+            if (user.getProvider() == AuthProvider.LOCAL) {
+                throw new RuntimeException("You are signed up with your email and password. Please use them to login.");
+            }
+            // Update user information if needed
+            user.setUsername(name);
+            user.setProviderId(providerId);
+        } else {
+            user = new User();
+            user.setEmail(email);
+            user.setUsername(name);
+            user.setProvider(AuthProvider.GOOGLE);
+            user.setProviderId(providerId);
+            user.setEnabled(true);
+        }
+
+        return userRepository.save(user);
     }
 
     public void verifyUser(VerifyUserDto input){

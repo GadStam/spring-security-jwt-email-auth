@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.AuthProvider;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -18,27 +19,50 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     @Column(unique = true, nullable = false)
     private String username;
+
     @Column(unique = true, nullable = false)
     private String email;
-    @Column(nullable = false)
+
+    @Column(nullable = true)  // Cambiado a nullable true
     private String password;
 
     @Column(name = "verification_code")
     private String verificationCode;
+
     @Column(name = "verification_expiration")
     private LocalDateTime verificationCodeExpiresAt;
+
     private boolean enabled;
 
-    //constructor for creating an unverified user
+    @Column(name = "provider")
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    // Constructor para crear un usuario no verificado
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.provider = AuthProvider.LOCAL;
     }
-    //default constructor
-    public User(){
+
+    // Constructor para crear un usuario de Google
+    public User(String email, String username, AuthProvider provider, String providerId) {
+        this.email = email;
+        this.username = username;
+        this.provider = provider;
+        this.providerId = providerId;
+        this.enabled = true;  // Los usuarios de Google se consideran verificados automáticamente
+    }
+
+    // Constructor por defecto
+    public User() {
     }
 
     @Override
@@ -46,7 +70,6 @@ public class User implements UserDetails {
         return List.of();
     }
 
-    //TODO: add proper boolean checks
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -67,3 +90,4 @@ public class User implements UserDetails {
         return enabled;
     }
 }
+
