@@ -1,5 +1,6 @@
 package com.security.jwt_spring_security_api.controller;
 
+import com.security.jwt_spring_security_api.dto.ResetPasswordDto;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +52,26 @@ public class AuthenticationController {
        }catch(RuntimeException e){
            return ResponseEntity.badRequest().body(e.getMessage());
        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestParam String email) {
+        try {
+            authenticationService.forgotPassword(email);
+            return ResponseEntity.ok("Password reset email sent successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordDto input) {
+        try {
+            authenticationService.resetPassword(input);
+            return ResponseEntity.ok("Password reset successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/resend")
