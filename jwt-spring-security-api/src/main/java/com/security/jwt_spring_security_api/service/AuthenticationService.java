@@ -27,10 +27,10 @@ public class AuthenticationService {
     private final EmailService emailService;
 
     public AuthenticationService(
-        UserRepository userRepository,
-        AuthenticationManager authenticationManager, 
-        PasswordEncoder passwordEncoder,
-        EmailService emailService) {
+            UserRepository userRepository,
+            AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -60,22 +60,22 @@ public class AuthenticationService {
     public void verifyUser(VerifyUserDto input){
         Optional<User> userOptional = userRepository.findByEmail(input.getEmail());
         if(userOptional.isPresent()){
-           User user = userOptional.get();
-           if(user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())){
-               throw new RuntimeException("Verification code expired");
-           }
+            User user = userOptional.get();
+            if(user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())){
+                throw new RuntimeException("Verification code expired");
+            }
 
-           if(user.getVerificationCode().equals(input.getVerificationCode())){
-               user.setEnabled(true);
-               user.setVerificationCode(null);
-               user.setVerificationCodeExpiresAt(null);
-               userRepository.save(user);
+            if(user.getVerificationCode().equals(input.getVerificationCode())){
+                user.setEnabled(true);
+                user.setVerificationCode(null);
+                user.setVerificationCodeExpiresAt(null);
+                userRepository.save(user);
+            }else{
+                throw new RuntimeException("Invalid verification code");
+            }
         }else{
-            throw new RuntimeException("Invalid verification code");
+            throw new RuntimeException("User not found");
         }
-    }else{
-        throw new RuntimeException("User not found");
-    }
     }
 
     public void resendVerificationCode(String email){

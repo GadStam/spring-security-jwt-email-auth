@@ -22,7 +22,7 @@ public class User implements UserDetails {
     private String username;
     @Column(unique = true, nullable = false)
     private String email;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(name = "verification_code")
@@ -30,6 +30,8 @@ public class User implements UserDetails {
     @Column(name = "verification_expiration")
     private LocalDateTime verificationCodeExpiresAt;
     private boolean enabled;
+    @Column(unique = true, nullable = true)
+    private String googleId;
 
     //constructor for creating an unverified user
     public User(String username, String email, String password) {
