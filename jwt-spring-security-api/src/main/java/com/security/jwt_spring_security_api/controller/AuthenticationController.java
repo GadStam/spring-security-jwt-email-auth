@@ -1,9 +1,7 @@
 package com.security.jwt_spring_security_api.controller;
 
 import com.security.jwt_spring_security_api.dto.ResetPasswordDto;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.security.jwt_spring_security_api.dto.LoginUserDto;
 import com.security.jwt_spring_security_api.dto.RegisterUserDto;
@@ -14,8 +12,6 @@ import com.security.jwt_spring_security_api.service.AuthenticationService;
 import com.security.jwt_spring_security_api.service.JwtService;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RequestMapping("/auth")
@@ -35,7 +31,7 @@ public class AuthenticationController {
         User registeredUser = authenticationService.signup(registerUserDto);
         return ResponseEntity.ok(registeredUser);
     }
-
+    @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginUserDto){
         User authenticatedUser = authenticationService.authenticate(loginUserDto);
